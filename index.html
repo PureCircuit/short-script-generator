@@ -160,15 +160,10 @@
       document.getElementById('genre').value = ideaGenres[Math.floor(Math.random()*ideaGenres.length)];
       document.getElementById('target').value = ideaTargets[Math.floor(Math.random()*ideaTargets.length)];
     }
-
-    function viralIdea(){
-      const idea = viralIdeas[Math.floor(Math.random()*viralIdeas.length)];
-      document.getElementById('theme').value = idea;
-    }
-      document.getElementById('theme').value = ideaThemes[Math.floor(Math.random()*ideaThemes.length)];
-      document.getElementById('genre').value = ideaGenres[Math.floor(Math.random()*ideaGenres.length)];
-      document.getElementById('target').value = ideaTargets[Math.floor(Math.random()*ideaTargets.length)];
-    }
+function viralIdea(){
+  const idea = viralIdeas[Math.floor(Math.random()*viralIdeas.length)];
+  document.getElementById('theme').value = idea;
+}
 
     function generateScript() {
       const theme = document.getElementById('theme').value.trim() || '英語の発音';
