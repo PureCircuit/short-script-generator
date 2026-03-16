@@ -11,6 +11,9 @@
     .output-card { transition: all 0.3s; }
     .output-card:hover { transform: translateY(-4px); box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1); }
     .copy-btn { transition: all 0.2s; }
+    /* Tailwind CDN読み込み失敗時のフォールバック */
+    .bg-zinc-950 { background-color: #09090b; }
+    .text-zinc-200 { color: #e4e4e7; }
   </style>
 </head>
 <body class="bg-zinc-950 text-zinc-200 min-h-screen">
@@ -27,6 +30,7 @@
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+      <!-- 入力エリア -->
       <div class="lg:col-span-5 bg-zinc-900 rounded-3xl p-8 border border-zinc-800">
         <h2 class="text-xl font-semibold mb-6 flex items-center gap-2">
           <span>📝</span> 入力情報
@@ -34,39 +38,45 @@
 
         <div class="space-y-6">
           <div>
-            <label class="block text-sm font-medium text-zinc-400 mb-2">テーマ（動画の話題）</label>
+            <label class="block text-sm font-medium text-zinc-400 mb-2" for="theme">テーマ（動画の話題）</label>
             <input id="theme" type="text" placeholder="例: 英語の発音改善" class="w-full bg-zinc-950 border border-zinc-700 rounded-2xl px-5 py-4 focus:outline-none focus:border-violet-500 transition-colors text-lg" />
           </div>
 
           <div>
-            <label class="block text-sm font-medium text-zinc-400 mb-2">ジャンル（動画カテゴリ）</label>
+            <label class="block text-sm font-medium text-zinc-400 mb-2" for="genre">ジャンル（動画カテゴリ）</label>
             <input id="genre" type="text" placeholder="例: 語学学習" class="w-full bg-zinc-950 border border-zinc-700 rounded-2xl px-5 py-4 focus:outline-none focus:border-violet-500 transition-colors text-lg" />
           </div>
 
           <div>
-            <label class="block text-sm font-medium text-zinc-400 mb-2">ターゲット（視聴者）</label>
+            <label class="block text-sm font-medium text-zinc-400 mb-2" for="target">ターゲット（視聴者）</label>
             <input id="target" type="text" placeholder="例: 社会人初心者" class="w-full bg-zinc-950 border border-zinc-700 rounded-2xl px-5 py-4 focus:outline-none focus:border-violet-500 transition-colors text-lg" />
           </div>
         </div>
 
-        <button onclick="randomIdea()" class="mt-2 w-full bg-zinc-800 hover:bg-zinc-700 text-white font-bold py-3 rounded-2xl text-sm transition-all">
-          💡 ネタを自動生成（迷った人用）
-        </button>
+        <div class="mt-4 grid grid-cols-2 gap-3">
+          <button id="btnRandomIdea" class="bg-zinc-800 hover:bg-zinc-700 text-white font-bold py-3 rounded-2xl text-sm transition-all">
+            💡 ネタを自動生成
+          </button>
+          <button id="btnViralIdea" class="bg-zinc-800 hover:bg-zinc-700 text-white font-bold py-3 rounded-2xl text-sm transition-all">
+            🔥 バズネタを挿入
+          </button>
+        </div>
 
-        <button onclick="generateScript()" class="mt-8 w-full bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-500 hover:to-fuchsia-500 text-white font-bold py-5 rounded-2xl text-xl shadow-lg shadow-violet-500/30 transition-all active:scale-95">
+        <button id="btnGenerate" class="mt-6 w-full bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-500 hover:to-fuchsia-500 text-white font-bold py-5 rounded-2xl text-xl shadow-lg shadow-violet-500/30 transition-all active:scale-95">
           🚀 AIで台本を生成する
         </button>
 
         <p class="text-center text-zinc-500 text-xs mt-4">※これはHTMLデモです。実際のAIはAPI連携で本格化可能</p>
       </div>
 
+      <!-- 出力エリア -->
       <div class="lg:col-span-7" id="results" style="display: none;">
         <div class="bg-zinc-900 rounded-3xl p-8 border border-zinc-800">
           <div class="flex justify-between items-center mb-6">
             <h2 class="text-2xl font-bold flex items-center gap-3">
               <span>📋</span> 生成結果
             </h2>
-            <button onclick="clearAll()" class="text-zinc-400 hover:text-white text-sm flex items-center gap-1">
+            <button id="btnClear" class="text-zinc-400 hover:text-white text-sm flex items-center gap-1">
               <span>🗑</span> クリア
             </button>
           </div>
@@ -137,8 +147,14 @@
   </div>
 
   <script>
-
-    const ideaThemes = ["ROBLOX攻略","小学生ゲームあるある","AIツール紹介","勉強テクニック","YouTube伸ばす方法","副業アイデア","フォートナイト攻略","ゲームの裏ワザ","YouTuberあるある","小学生の日常","AIで作る動画","バズるショート動画"];
+    // ========== データ ==========
+    const ideaThemes = [
+      "ROBLOX攻略","小学生ゲームあるある","AIツール紹介","勉強テクニック",
+      "YouTube伸ばす方法","副業アイデア","フォートナイト攻略","ゲームの裏ワザ",
+      "YouTuberあるある","小学生の日常","AIで作る動画","バズるショート動画"
+    ];
+    const ideaGenres = ["ゲーム実況","教育","副業","IT","エンタメ"];
+    const ideaTargets = ["小学生","中学生","初心者YouTuber","副業初心者","社会人"];
 
     const viralIdeas = [
       "99%が知らないROBLOXテク",
@@ -152,131 +168,199 @@
       "このAIツールがヤバい",
       "1日で動画が伸びた理由"
     ];
-    const ideaGenres = ["ゲーム実況","教育","副業","IT","エンタメ"];
-    const ideaTargets = ["小学生","中学生","初心者YouTuber","副業初心者","社会人"];
 
-    function randomIdea(){
-      document.getElementById('theme').value = ideaThemes[Math.floor(Math.random()*ideaThemes.length)];
-      document.getElementById('genre').value = ideaGenres[Math.floor(Math.random()*ideaGenres.length)];
-      document.getElementById('target').value = ideaTargets[Math.floor(Math.random()*ideaTargets.length)];
+    // ========== ユーティリティ ==========
+    function pickRandom(arr) {
+      return arr[Math.floor(Math.random() * arr.length)];
     }
-function viralIdea(){
-  const idea = viralIdeas[Math.floor(Math.random()*viralIdeas.length)];
-  document.getElementById('theme').value = idea;
-}
 
-    function generateScript() {
-      const theme = document.getElementById('theme').value.trim() || '英語の発音';
-      const genre = document.getElementById('genre').value.trim() || '語学学習';
-      const target = document.getElementById('target').value.trim() || '社会人初心者';
+    function escapeHTML(str) {
+      const div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    }
 
-      const titlesHTML = `
-        <div class="flex justify-between gap-3 bg-zinc-900 p-4 rounded-2xl group">
-          <div class="text-sm">1. ${theme}を${genre}で爆速マスター！${target}が即実践</div>
-          <button onclick="copyText(this)" class="copy-btn opacity-100 md:opacity-0 md:group-hover:opacity-100 shrink-0 text-xs bg-zinc-800 hover:bg-zinc-700 px-3 py-1 rounded-lg">コピー</button>
-        </div>
-        <div class="flex justify-between gap-3 bg-zinc-900 p-4 rounded-2xl group">
-          <div class="text-sm">2. 【${target}衝撃】${theme}が1週間で変わる${genre}テク</div>
-          <button onclick="copyText(this)" class="copy-btn opacity-100 md:opacity-0 md:group-hover:opacity-100 shrink-0 text-xs bg-zinc-800 hover:bg-zinc-700 px-3 py-1 rounded-lg">コピー</button>
-        </div>
-        <div class="flex justify-between gap-3 bg-zinc-900 p-4 rounded-2xl group">
-          <div class="text-sm">3. ${genre}で${theme}克服！${target}が泣いて喜ぶ方法</div>
-          <button onclick="copyText(this)" class="copy-btn opacity-100 md:opacity-0 md:group-hover:opacity-100 shrink-0 text-xs bg-zinc-800 hover:bg-zinc-700 px-3 py-1 rounded-lg">コピー</button>
-        </div>
-      `;
-      document.getElementById('titles').innerHTML = titlesHTML;
+    // ターゲット層に応じた共感テキスト生成
+    function getEmpathyText(target, theme) {
+      var youngKeywords = ['小学生', '中学生', '高校生', '学生', '子ども', '子供', 'キッズ'];
+      var isYoung = youngKeywords.some(function(kw) {
+        return target.indexOf(kw) !== -1;
+      });
 
-      const hooksHTML = `
-        <div class="flex justify-between gap-3 bg-zinc-900 p-4 rounded-2xl group">
-          <div class="text-sm">1. 「${theme}で毎回失敗してる…」${target}あるある</div>
-          <button onclick="copyText(this)" class="copy-btn opacity-100 md:opacity-0 md:group-hover:opacity-100 shrink-0 text-xs bg-zinc-800 hover:bg-zinc-700 px-3 py-1 rounded-lg">コピー</button>
-        </div>
-        <div class="flex justify-between gap-3 bg-zinc-900 p-4 rounded-2xl group">
-          <div class="text-sm">2. たった15秒で${theme}が変わる${genre}裏技</div>
-          <button onclick="copyText(this)" class="copy-btn opacity-100 md:opacity-0 md:group-hover:opacity-100 shrink-0 text-xs bg-zinc-800 hover:bg-zinc-700 px-3 py-1 rounded-lg">コピー</button>
-        </div>
-        <div class="flex justify-between gap-3 bg-zinc-900 p-4 rounded-2xl group">
-          <div class="text-sm">3. ${target}の99%が知らない${theme}の正しいやり方</div>
-          <button onclick="copyText(this)" class="copy-btn opacity-100 md:opacity-0 md:group-hover:opacity-100 shrink-0 text-xs bg-zinc-800 hover:bg-zinc-700 px-3 py-1 rounded-lg">コピー</button>
-        </div>
-        <div class="flex justify-between gap-3 bg-zinc-900 p-4 rounded-2xl group">
-          <div class="text-sm">4. 今日から${theme}が楽になる${genre}神テク</div>
-          <button onclick="copyText(this)" class="copy-btn opacity-100 md:opacity-0 md:group-hover:opacity-100 shrink-0 text-xs bg-zinc-800 hover:bg-zinc-700 px-3 py-1 rounded-lg">コピー</button>
-        </div>
-        <div class="flex justify-between gap-3 bg-zinc-900 p-4 rounded-2xl group">
-          <div class="text-sm">5. ${target}が「これ知ってれば…」と後悔する${theme}</div>
-          <button onclick="copyText(this)" class="copy-btn opacity-100 md:opacity-0 md:group-hover:opacity-100 shrink-0 text-xs bg-zinc-800 hover:bg-zinc-700 px-3 py-1 rounded-lg">コピー</button>
-        </div>
-      `;
-      document.getElementById('hooks').innerHTML = hooksHTML;
+      var youngPatterns = [
+        {
+          quote: '「' + theme + 'がうまくいかなくて、もうやめようかなって思ったこと、ない？」',
+          explanation: target + 'が「わかる！」と思える"あるある"で共感を呼びます。同じ目線で語りかけることで、最後まで見てもらえる確率がアップします。'
+        },
+        {
+          quote: '「' + theme + '、みんな簡単そうにやってるのに自分だけできない…って感じたことない？」',
+          explanation: target + 'が日常で感じるリアルな悩みに寄り添います。「自分だけじゃないんだ」と思わせることで視聴維持率を高めます。'
+        },
+        {
+          quote: '「正直、' + theme + 'って難しすぎない？でも大丈夫、コツがあるんです」',
+          explanation: target + 'の素直な気持ちを代弁してから解決策を提示する流れです。共感→希望のセットで最後まで引きつけます。'
+        }
+      ];
 
-      document.getElementById('empathy').innerHTML = `
-        <p class="italic">「私も${target}の頃、${theme}で全然上達しなくて毎日挫折してました…」</p>
-        <p class="mt-3 text-zinc-400">多くの${target}が同じ悩みを抱えています。このショートで「自分だけじゃない」と共感 → 最後まで見てもらえる確率アップを狙います。</p>
-      `;
+      var adultPatterns = [
+        {
+          quote: '「私も' + target + 'の頃、' + theme + 'で全然上達しなくて毎日挫折してました…」',
+          explanation: '多くの' + target + 'が同じ悩みを抱えています。このショートで「自分だけじゃない」と共感 → 最後まで見てもらえる確率アップを狙います。'
+        },
+        {
+          quote: '「昔の自分に教えてあげたい…' + theme + 'で遠回りしまくった経験、ありませんか？」',
+          explanation: target + 'が過去の苦労を思い出して「わかる！」と感じるフレーズです。経験者目線で信頼感も生まれます。'
+        },
+        {
+          quote: '「' + theme + 'に何度も挑戦しては挫折…そんな' + target + '時代を経て気づいたことがあります」',
+          explanation: '失敗→学びのストーリーで' + target + 'の共感を呼びます。「この人も同じだったんだ」と思わせて視聴を継続させます。'
+        }
+      ];
 
-      const scriptText = `【${theme} × ${genre} ショート台本】
-
-0-3秒　バズフック：
-「${target}のみなさん、${theme}で毎回詰まってませんか？」
-
-3-15秒　共感＋問題提起：
-「実はほとんどの人が間違ったやり方で練習してるんです…」
-
-15-45秒　解決ステップ（3つ）：
-① まずはこれを試す
-② 次にここを意識
-③ 最後にこの練習を1日3回
-
-45-55秒　結果イメージ：
-「これだけで${target}のあなたが劇的に変わります！」
-
-55-60秒　CTA：
-「続きが気になる人はコメントで教えてください👇」`;
-      document.getElementById('script').textContent = scriptText;
-
-      document.getElementById('comment').innerHTML = `
-        <div class="bg-zinc-900 p-5 rounded-2xl text-center text-lg">
-          「この方法、試してみたい？結果をコメントで教えてください！👇」
-        </div>
-      `;
-
-      document.getElementById('follow').innerHTML = `
-        <div class="bg-zinc-900 p-5 rounded-2xl text-center text-lg">
-          「AIで使える台本をもっと欲しい人はフォローしてね🔥」
-        </div>
-      `;
-
-      const tags = ['#YouTubeShorts', `#${genre}`, `#${theme.replace(/\s+/g, '')}`, `#${target.replace(/\s+/g, '')}`, '#ショート動画', '#AI台本', `#${genre}初心者`];
-      document.getElementById('hashtags').innerHTML = tags.map(tag =>
-        `<span onclick="copyText(this)" class="cursor-pointer bg-zinc-800 hover:bg-violet-900 px-4 py-2 rounded-3xl text-sm transition-all">${tag}</span>`
-      ).join('');
-
-      document.getElementById('results').style.display = 'block';
-      document.getElementById('results').scrollIntoView({ behavior: 'smooth' });
+      var patterns = isYoung ? youngPatterns : adultPatterns;
+      return patterns[Math.floor(Math.random() * patterns.length)];
     }
 
     function copyText(element) {
-      let textToCopy = '';
+      var textToCopy = '';
       if (element.tagName === 'SPAN' && element.classList.contains('cursor-pointer')) {
         textToCopy = element.textContent;
       } else if (element.parentElement && element.parentElement.querySelector('div')) {
         textToCopy = element.parentElement.querySelector('div').textContent.trim();
       } else {
-        textToCopy = element.closest('.output-card')?.innerText || '';
+        textToCopy = element.closest('.output-card') ? element.closest('.output-card').innerText : '';
       }
 
-      navigator.clipboard.writeText(textToCopy).then(() => {
-        const original = element.textContent;
-        element.textContent = '✅ コピーした！';
-        setTimeout(() => {
-          element.textContent = original || 'コピー';
-        }, 1500);
-      }).catch(() => {
-        alert('コピーに失敗しました。手動でコピーしてください。');
-      });
+      // clipboard APIが使えない環境用のフォールバック
+      if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(textToCopy).then(function() {
+          showCopied(element);
+        }).catch(function() {
+          fallbackCopy(textToCopy, element);
+        });
+      } else {
+        fallbackCopy(textToCopy, element);
+      }
     }
 
+    function fallbackCopy(text, element) {
+      var textarea = document.createElement('textarea');
+      textarea.value = text;
+      textarea.style.position = 'fixed';
+      textarea.style.left = '-9999px';
+      document.body.appendChild(textarea);
+      textarea.select();
+      try {
+        document.execCommand('copy');
+        showCopied(element);
+      } catch (e) {
+        alert('コピーに失敗しました。手動でコピーしてください。');
+      }
+      document.body.removeChild(textarea);
+    }
+
+    function showCopied(element) {
+      var original = element.textContent;
+      element.textContent = '✅ コピーした！';
+      setTimeout(function() {
+        element.textContent = original || 'コピー';
+      }, 1500);
+    }
+
+    // ========== コピーボタン付きアイテムHTML生成 ==========
+    function makeItem(text) {
+      return '<div class="flex justify-between gap-3 bg-zinc-900 p-4 rounded-2xl group">' +
+        '<div class="text-sm">' + escapeHTML(text) + '</div>' +
+        '<button onclick="copyText(this)" class="copy-btn opacity-100 md:opacity-0 md:group-hover:opacity-100 shrink-0 text-xs bg-zinc-800 hover:bg-zinc-700 px-3 py-1 rounded-lg">コピー</button>' +
+        '</div>';
+    }
+
+    // ========== ネタ自動生成 ==========
+    function randomIdea() {
+      document.getElementById('theme').value = pickRandom(ideaThemes);
+      document.getElementById('genre').value = pickRandom(ideaGenres);
+      document.getElementById('target').value = pickRandom(ideaTargets);
+    }
+
+    // ========== バズネタ挿入 ==========
+    function viralIdea() {
+      document.getElementById('theme').value = pickRandom(viralIdeas);
+    }
+
+    // ========== 台本生成（メイン機能） ==========
+    function generateScript() {
+      try {
+        var theme = document.getElementById('theme').value.trim() || '英語の発音';
+        var genre = document.getElementById('genre').value.trim() || '語学学習';
+        var target = document.getElementById('target').value.trim() || '社会人初心者';
+
+        // ① タイトル
+        var titlesHTML = '';
+        titlesHTML += makeItem('1. ' + theme + 'を' + genre + 'で爆速マスター！' + target + 'が即実践');
+        titlesHTML += makeItem('2. 【' + target + '衝撃】' + theme + 'が1週間で変わる' + genre + 'テク');
+        titlesHTML += makeItem('3. ' + genre + 'で' + theme + '克服！' + target + 'が泣いて喜ぶ方法');
+        document.getElementById('titles').innerHTML = titlesHTML;
+
+        // ② バズフック
+        var hooksHTML = '';
+        hooksHTML += makeItem('1. 「' + theme + 'で毎回失敗してる…」' + target + 'あるある');
+        hooksHTML += makeItem('2. たった15秒で' + theme + 'が変わる' + genre + '裏技');
+        hooksHTML += makeItem('3. ' + target + 'の99%が知らない' + theme + 'の正しいやり方');
+        hooksHTML += makeItem('4. 今日から' + theme + 'が楽になる' + genre + '神テク');
+        hooksHTML += makeItem('5. ' + target + 'が「これ知ってれば…」と後悔する' + theme);
+        document.getElementById('hooks').innerHTML = hooksHTML;
+
+        // ③ 共感ポイント（ターゲット層に応じて切り替え）
+        var empathyText = getEmpathyText(target, theme);
+        document.getElementById('empathy').innerHTML =
+          '<p class="italic">' + escapeHTML(empathyText.quote) + '</p>' +
+          '<p class="mt-3 text-zinc-400">' + escapeHTML(empathyText.explanation) + '</p>';
+
+        // ④ ショート台本
+        var scriptText = '【' + theme + ' × ' + genre + ' ショート台本】\n\n' +
+          '0-3秒　バズフック：\n' +
+          '「' + target + 'のみなさん、' + theme + 'で毎回詰まってませんか？」\n\n' +
+          '3-15秒　共感＋問題提起：\n' +
+          '「実はほとんどの人が間違ったやり方で練習してるんです…」\n\n' +
+          '15-45秒　解決ステップ（3つ）：\n' +
+          '① まずはこれを試す\n' +
+          '② 次にここを意識\n' +
+          '③ 最後にこの練習を1日3回\n\n' +
+          '45-55秒　結果イメージ：\n' +
+          '「これだけで' + target + 'のあなたが劇的に変わります！」\n\n' +
+          '55-60秒　CTA：\n' +
+          '「続きが気になる人はコメントで教えてください👇」';
+        document.getElementById('script').textContent = scriptText;
+
+        // ⑤ コメント誘導文
+        document.getElementById('comment').innerHTML =
+          '<div class="bg-zinc-900 p-5 rounded-2xl text-center text-lg">' +
+          '「この方法、試してみたい？結果をコメントで教えてください！👇」' +
+          '</div>';
+
+        // ⑥ フォロー誘導文
+        document.getElementById('follow').innerHTML =
+          '<div class="bg-zinc-900 p-5 rounded-2xl text-center text-lg">' +
+          '「AIで使える台本をもっと欲しい人はフォローしてね🔥」' +
+          '</div>';
+
+        // ⑦ ハッシュタグ
+        var tags = ['#YouTubeShorts', '#' + genre, '#' + theme.replace(/\s+/g, ''), '#' + target.replace(/\s+/g, ''), '#ショート動画', '#AI台本', '#' + genre + '初心者'];
+        document.getElementById('hashtags').innerHTML = tags.map(function(tag) {
+          return '<span onclick="copyText(this)" class="cursor-pointer bg-zinc-800 hover:bg-violet-900 px-4 py-2 rounded-3xl text-sm transition-all">' + escapeHTML(tag) + '</span>';
+        }).join('');
+
+        // 結果を表示してスクロール
+        document.getElementById('results').style.display = 'block';
+        document.getElementById('results').scrollIntoView({ behavior: 'smooth' });
+
+      } catch (err) {
+        console.error('生成エラー:', err);
+        alert('台本の生成中にエラーが発生しました: ' + err.message);
+      }
+    }
+
+    // ========== クリア ==========
     function clearAll() {
       if (confirm('すべてクリアしますか？')) {
         document.getElementById('theme').value = '';
@@ -286,18 +370,25 @@ function viralIdea(){
       }
     }
 
-    document.addEventListener('keydown', function (e) {
-      if (e.key === 'Enter') {
-        const active = document.activeElement;
-        if (active.tagName === 'INPUT') {
-          generateScript();
-        }
-      }
-    });
+    // ========== イベント登録（onclick属性ではなくaddEventListenerで確実に） ==========
+    document.addEventListener('DOMContentLoaded', function() {
+      document.getElementById('btnRandomIdea').addEventListener('click', randomIdea);
+      document.getElementById('btnViralIdea').addEventListener('click', viralIdea);
+      document.getElementById('btnGenerate').addEventListener('click', generateScript);
+      document.getElementById('btnClear').addEventListener('click', clearAll);
 
-    window.onload = function () {
+      // Enterキーで生成
+      var inputs = document.querySelectorAll('#theme, #genre, #target');
+      inputs.forEach(function(input) {
+        input.addEventListener('keydown', function(e) {
+          if (e.key === 'Enter') {
+            generateScript();
+          }
+        });
+      });
+
       console.log('%c✅ YouTubeショート台本生成ツール デモ版 起動完了！', 'color:#a78bfa; font-size:13px');
-    };
+    });
   </script>
 </body>
 </html>
