@@ -66,7 +66,7 @@
             <label class="block text-sm font-medium text-zinc-400 mb-2" for="theme">テーマ（動画の話題）</label>
             <div class="flex gap-2 items-center">
               <input id="theme" type="text" placeholder="例: 英語の発音改善" class="w-full bg-zinc-950 border border-zinc-700 rounded-2xl px-5 py-4 focus:outline-none focus:border-violet-500 transition-colors text-lg" />
-              <button id="micBtn" class="mic-btn" title="音声入力（クリックで録音開始）">
+              <button id="micBtn" class="mic-btn" title="音声入力（クリックで録音開始）" onclick="toggleRecording()">
                 <svg id="micIcon" xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/>
                   <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
@@ -75,7 +75,7 @@
                 </svg>
               </button>
             </div>
-            <p id="micStatus" class="text-xs text-zinc-500 mt-1" style="display:none;"></p>
+            <p id="micStatus" class="text-sm font-bold mt-2 px-3 py-2 rounded-xl bg-zinc-800" style="display:none;"></p>
           </div>
 
           <div>
@@ -462,12 +462,14 @@
     }
 
     function toggleRecording() {
+      var status = document.getElementById('micStatus');
+      status.style.display = 'block';
+      status.textContent = '⏳ 起動中...';
+
       var SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
       if (!SpeechRecognition) {
-        var status = document.getElementById('micStatus');
-        status.style.display = 'block';
-        status.textContent = '❌ このブラウザは音声入力に対応していません（Chrome推奨）';
-        setTimeout(function() { status.style.display = 'none'; }, 3000);
+        status.textContent = '❌ このブラウザは音声入力非対応です（Chrome/Edgeを使ってください）';
+        setTimeout(function() { status.style.display = 'none'; }, 4000);
         return;
       }
 
