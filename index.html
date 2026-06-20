@@ -488,6 +488,14 @@
       document.getElementById('btnClear').addEventListener('click', clearAll);
       document.getElementById('micBtn').addEventListener('click', toggleRecording);
 
+      // Ctrl+Space でマイクON/OFF
+      document.addEventListener('keydown', function(e) {
+        if (e.ctrlKey && e.code === 'Space') {
+          e.preventDefault();
+          toggleRecording();
+        }
+      });
+
       // Enterキーで生成
       var inputs = document.querySelectorAll('#theme, #genre, #target');
       inputs.forEach(function(input) {
