@@ -14,6 +14,31 @@
     /* Tailwind CDN読み込み失敗時のフォールバック */
     .bg-zinc-950 { background-color: #09090b; }
     .text-zinc-200 { color: #e4e4e7; }
+    /* マイクボタン */
+    .mic-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: #27272a;
+      border: 2px solid #52525b;
+      cursor: pointer;
+      transition: all 0.2s;
+      flex-shrink: 0;
+    }
+    .mic-btn:hover { background: #3f3f46; border-color: #a78bfa; }
+    .mic-btn.recording {
+      background: #dc2626;
+      border-color: #ef4444;
+      animation: pulse-red 1s infinite;
+    }
+    .mic-btn svg { pointer-events: none; }
+    @keyframes pulse-red {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(220,38,38,0.5); }
+      50% { box-shadow: 0 0 0 8px rgba(220,38,38,0); }
+    }
   </style>
 </head>
 <body class="bg-zinc-950 text-zinc-200 min-h-screen">
@@ -39,7 +64,18 @@
         <div class="space-y-6">
           <div>
             <label class="block text-sm font-medium text-zinc-400 mb-2" for="theme">テーマ（動画の話題）</label>
-            <input id="theme" type="text" placeholder="例: 英語の発音改善" class="w-full bg-zinc-950 border border-zinc-700 rounded-2xl px-5 py-4 focus:outline-none focus:border-violet-500 transition-colors text-lg" />
+            <div class="flex gap-2 items-center">
+              <input id="theme" type="text" placeholder="例: 英語の発音改善" class="w-full bg-zinc-950 border border-zinc-700 rounded-2xl px-5 py-4 focus:outline-none focus:border-violet-500 transition-colors text-lg" />
+              <button id="micBtn" class="mic-btn" title="音声入力（クリックで録音開始）">
+                <svg id="micIcon" xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/>
+                  <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+                  <line x1="12" y1="19" x2="12" y2="23"/>
+                  <line x1="8" y1="23" x2="16" y2="23"/>
+                </svg>
+              </button>
+            </div>
+            <p id="micStatus" class="text-xs text-zinc-500 mt-1" style="display:none;"></p>
           </div>
 
           <div>
@@ -370,12 +406,87 @@
       }
     }
 
+    // ========== 音声入力（Web Speech API） ==========
+    var recognition = null;
+    var isRecording = false;
+
+    function initSpeechRecognition() {
+      var SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SpeechRecognition) return null;
+
+      var rec = new SpeechRecognition();
+      rec.lang = 'ja-JP';
+      rec.continuous = false;
+      rec.interimResults = true;
+
+      rec.onstart = function() {
+        isRecording = true;
+        document.getElementById('micBtn').classList.add('recording');
+        var status = document.getElementById('micStatus');
+        status.style.display = 'block';
+        status.textContent = '🔴 録音中… 話しかけてください';
+      };
+
+      rec.onresult = function(event) {
+        var transcript = '';
+        for (var i = event.resultIndex; i < event.results.length; i++) {
+          transcript += event.results[i][0].transcript;
+        }
+        document.getElementById('theme').value = transcript;
+      };
+
+      rec.onend = function() {
+        isRecording = false;
+        document.getElementById('micBtn').classList.remove('recording');
+        var status = document.getElementById('micStatus');
+        status.textContent = '✅ 録音完了';
+        setTimeout(function() { status.style.display = 'none'; }, 2000);
+      };
+
+      rec.onerror = function(event) {
+        isRecording = false;
+        document.getElementById('micBtn').classList.remove('recording');
+        var status = document.getElementById('micStatus');
+        status.style.display = 'block';
+        if (event.error === 'not-allowed') {
+          status.textContent = '❌ マイクの使用が許可されていません';
+        } else if (event.error === 'no-speech') {
+          status.textContent = '⚠️ 音声が検出されませんでした';
+        } else {
+          status.textContent = '❌ エラー: ' + event.error;
+        }
+        setTimeout(function() { status.style.display = 'none'; }, 3000);
+      };
+
+      return rec;
+    }
+
+    function toggleRecording() {
+      var SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SpeechRecognition) {
+        var status = document.getElementById('micStatus');
+        status.style.display = 'block';
+        status.textContent = '❌ このブラウザは音声入力に対応していません（Chrome推奨）';
+        setTimeout(function() { status.style.display = 'none'; }, 3000);
+        return;
+      }
+
+      if (isRecording) {
+        if (recognition) recognition.stop();
+        return;
+      }
+
+      recognition = initSpeechRecognition();
+      if (recognition) recognition.start();
+    }
+
     // ========== イベント登録（onclick属性ではなくaddEventListenerで確実に） ==========
     document.addEventListener('DOMContentLoaded', function() {
       document.getElementById('btnRandomIdea').addEventListener('click', randomIdea);
       document.getElementById('btnViralIdea').addEventListener('click', viralIdea);
       document.getElementById('btnGenerate').addEventListener('click', generateScript);
       document.getElementById('btnClear').addEventListener('click', clearAll);
+      document.getElementById('micBtn').addEventListener('click', toggleRecording);
 
       // Enterキーで生成
       var inputs = document.querySelectorAll('#theme, #genre, #target');
